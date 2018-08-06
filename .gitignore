@@ -1,0 +1,21 @@
+.idea
+*.iml
+target
+
+*.jar
+
+*.log
+.DS_Store
+/bin/
+
+# Eclipse files
+.cache*
+.classpath
+.settings
+.project
+
+# Sample data files
+/data
+*.log
+metastore_db
+
