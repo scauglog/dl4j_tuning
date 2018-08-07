@@ -4,16 +4,14 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import aperture.tuning.predictions.features.FeaturesToNd4j
-import aperture.tuning.predictions.FeaturesAndTarget
+import aperture.tuning.predictions.{CsvRow, FeaturesAndTarget}
 import com.typesafe.scalalogging.Logger
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{array, col}
 import org.deeplearning4j.nn.graph.ComputationGraph
 import aperture.tuning.predictions.model._
 import aperture.tuning.helpers.JobMetadata
-import org.apache.spark.sql.types._
 import org.nd4j.linalg.dataset.api.MultiDataSet
 import org.nd4j.linalg.factory.Nd4j
+import scala.io.Source
 
 object TuningMain {
   val logger: Logger = Logger(getClass)
@@ -31,26 +29,10 @@ object TuningMain {
     val baseFeatures = Seq("feat1","feat2","feat3")
     val numberOfLags = 3
     var loopCount = 0
-    val schema = StructType(Seq(
-      StructField("key", StringType),
-      StructField("bid", DoubleType),
-      StructField("target", DoubleType),
-      StructField("feat1", DoubleType),
-      StructField("feat2", DoubleType),
-      StructField("feat3", DoubleType),
-      StructField("feat1_1", DoubleType),
-      StructField("feat2_1", DoubleType),
-      StructField("feat3_1", DoubleType),
-      StructField("feat1_2", DoubleType),
-      StructField("feat2_2", DoubleType),
-      StructField("feat3_2", DoubleType)
-    ))
+
     for (dummy <- 0 to 1000) yield {
-      implicit val sparkSession: SparkSession = SparkSession
-        .builder()
-        .getOrCreate()
-      val trainSet = sparkSession.read.schema(schema).csv(conf.inputPath + "/train")
-      val testSet = sparkSession.read.schema(schema).csv(conf.inputPath + "/test")
+      val trainSet = readCsvFile(conf.inputPath + "/train/data_dup.csv")
+      val testSet = readCsvFile(conf.inputPath + "/test/data.csv")
 
       val features = baseFeatures
 
@@ -60,7 +42,6 @@ object TuningMain {
 
       val trainIt = new InMemoryMultiDataSetIterator(preprocessedDataTrain, batchSize = 256)
       val evalIt = new InMemoryMultiDataSetIterator(preprocessedDataTest, batchSize = 256)
-      sparkSession.close()
 
       Configurations.generateConfigurations(defaultTuningConfiguration).foreach { networkConfiguration =>
         val (model, confWithEvaluationConfiguration) =
@@ -74,18 +55,21 @@ object TuningMain {
     }
   }
 
-  def preprocessPerformanceData(features: Seq[String], numberOfLags: Int)(inputDF: DataFrame)
-                               (implicit sparkSession: SparkSession): MultiDataSet = {
-    import sparkSession.implicits._
-    val preprocessedData = inputDF.select(
-      col("bid"),
-      array(
-        col("feat1"), col("feat2"), col("feat3"),
-        col("feat1_1"), col("feat2_1"), col("feat3_1"),
-        col("feat1_2"), col("feat2_2"), col("feat3_2")
-      ).as("features"),
-      col("target")
-    ).as[FeaturesAndTarget]
+  def readCsvFile(path: String): Array[CsvRow] = {
+    val bufferedSource = Source.fromFile(path)
+    val data = bufferedSource.getLines().toArray.map(CsvRow.apply)
+    bufferedSource.close
+    data
+  }
+
+  def preprocessPerformanceData(features: Seq[String], numberOfLags: Int)(inputDF: Array[CsvRow]): MultiDataSet = {
+    val preprocessedData = inputDF.map { row =>
+      FeaturesAndTarget(
+        bid = row.bid,
+        target = row.target,
+        features = Array(row.feat1, row.feat2, row.feat3, row.feat1_1, row.feat2_1, row.feat3_1, row.feat1_2, row.feat2_2, row.feat3_2)
+      )
+    }
     FeaturesToNd4j.transformFeaturesAndTargetToMultiDatasetShaped3(preprocessedData, numberOfLags)
   }
 

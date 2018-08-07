@@ -17,10 +17,6 @@
         <scala.version>2.11</scala.version>
         <scala.exact.version>${scala.version}.11</scala.exact.version>
 
-        <spark.version>2.1.1</spark.version>
-        <hadoop.version>2.7.4</hadoop.version>
-        <spark_jackson.version>2.6.5</spark_jackson.version>
-
         <dl4j.version>1.0.0-beta</dl4j.version>
         <cuda.version>9.0</cuda.version>
 
@@ -52,32 +48,9 @@
             <version>${scala.exact.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${scope}</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${scope}</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>2.7.4</version>
-            <scope>${scope}</scope>
             <exclusions>
                 <exclusion>
                     <groupId>log4j</groupId>
@@ -280,7 +253,7 @@
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>sncf.ouit.adwords.Main</mainClass>
+                                    <mainClass>aperture.tuning.predictions.tuning.TuningMain</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

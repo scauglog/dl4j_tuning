@@ -1,10 +1,7 @@
 package aperture.tuning.helpers
 
-import java.io._
-
-import com.google.common.io.Resources
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, FileUtil, Path}
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 
 object IO {
   def createHdfsOutputStream(path: String): FSDataOutputStream = {
